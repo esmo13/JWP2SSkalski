@@ -6,24 +6,24 @@ class OX:
     def __init__(self):
         self.playerX = Player(OX.X)
         self.playerO = Player(OX.O)
-        self.board = Board()
+        self._board = Board()
     def play(self):
         print('Witaj w grze kółko i krzyżyk!')
         currentPlayer, nextPlayer = self.playerX, self.playerO
         while True:
-            print(self.board)  # Wyświetl planszę na ekranie.
+            print(self._board)  # Wyświetl planszę na ekranie.
             move = None
-            while not self.board.isValidSpace(move):
+            while not self._board.isValidSpace(move):
                 print(f'Jaki jest ruch gracza {currentPlayer}? (1-9)')
                 move = input()
-            self.board.updateBoard(move, currentPlayer)  # Wykonanie ruchu.
+            self._board.updateBoard(move, currentPlayer)  # Wykonanie ruchu.
             # Sprawdzenie, czy gra jest zakończona:
-            if self.board.isWinner(currentPlayer):  # Sprawdzenie, kto wygrał.
-                print(self.board)
+            if self._board.isWinner(currentPlayer):  # Sprawdzenie, kto wygrał.
+                print(self._board)
                 print(f"{currentPlayer} wygrał grę!")
                 break
-            elif self.board.isBoardFull():  # Sprawdzenie remisu.
-                print(self.board)
+            elif self._board.isBoardFull():  # Sprawdzenie remisu.
+                print(self._board)
                 print('Gra zakończyła się remisem!')
                 break
             currentPlayer, nextPlayer = nextPlayer, currentPlayer  # Zmiana gracza.
@@ -41,30 +41,30 @@ class Player:
 
 class Board:
     def __init__(self):
-        self.board = {}
+        self._board = {}
         for space in OX.ALL_SPACES:
-            self.board[space] = OX.BLANK 
+            self._board[space] = OX.BLANK 
     def __str__(self):
          return f'''
-            {self.board['1']}|{self.board['2']}|{self.board['3']} 1 2 3 
+            {self._board['1']}|{self._board['2']}|{self._board['3']} 1 2 3 
             -+-+- 
-            {self.board['4']}|{self.board['5']}|{self.board['6']} 4 5 6 
+            {self._board['4']}|{self._board['5']}|{self._board['6']} 4 5 6 
             -+-+- 
-            {self.board['7']}|{self.board['8']}|{self.board['9']} 7 8 9'''
+            {self._board['7']}|{self._board['8']}|{self._board['9']} 7 8 9'''
     def updateBoard(self, space, player):
-            self.board[space] = player.symbol
+            self._board[space] = player.symbol
     def isValidSpace(self,space):
         if space is None:
             return False
-        return space in OX.ALL_SPACES or self.board[space] == OX.BLANK
+        return space in OX.ALL_SPACES or self._board[space] == OX.BLANK
         
     def isBoardFull(self):    
         for space in OX.ALL_SPACES:
-            if self.board[space] == OX.BLANK:
+            if self._board[space] == OX.BLANK:
                 return False # Jeśli nawet jedno pole jest puste, zwracaj False.
         return True # Nie ma wolnych pól, zatem zwróć True
     def isWinner(self, player):
-        b, p = self.board, player.symbol # Krótsze nazwy jako "składniowy cukier".
+        b, p = self._board, player.symbol # Krótsze nazwy jako "składniowy cukier".
     # Sprawdzenie, czy trzy takie same znaki występują w wierszach, kolumnach i po przekątnych.
         return ((b['1'] == b['2'] == b['3'] == p) or # poziomo na górze
             (b['4'] == b['5'] == b['6'] == p) or # poziomo w środku
