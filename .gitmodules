@@ -1,0 +1,3 @@
+[submodule "project/AssonanceClient"]
+	path = project/AssonanceClient
+	url = https://github.com/esmo13/AssonanceClient.git
