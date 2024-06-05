@@ -129,30 +129,43 @@ class Album(db.Model):
             'genres': [genre.to_dict() for genre in self.genres],
             'songs': [song.to_dict() for song in self.songs]
         }
-# class AlbumGenre(db.Model):
-#     __tablename__ = 'album_genre'
-#     album_id = db.Column(db.Integer, db.ForeignKey('albums.id'), primary_key=True)
-#     genre_id = db.Column(db.Integer, db.ForeignKey('genres.id'), primary_key=True)
-#     genre = db.relationship('Genre', back_populates='albums')
-#     album = db.relationship('AlbumGenre', back_populates='genres')
 
-# class Album(db.Model):
-#     __tablename__ = 'albums'
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(200), nullable=False)
-#     cover = db.Column(db.Text, nullable=False)
-#     author_id = db.Column(db.Integer, db.ForeignKey('artists.id'), nullable=False)
-#     released = db.Column(db.DateTime, nullable=True)
-#     genres = db.relationship('AlbumGenre', back_populates='album')
-#     songs = db.relationship('Song', backref='album', lazy=True)
+class Comment(db.Model):
+    __tablename__ = 'comments'
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(500), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    album_id = db.Column(db.Integer, db.ForeignKey('albums.id'), nullable=False)
 
-#     def to_dict(self):
-#         return {
-#             'id': self.id,
-#             'name': self.name,
-#             'cover': self.cover,
-#             'author': self.author.name,
-#             'released': self.released.isoformat() if self.released else None,
-#             'genres': [genre.genre.name for genre in self.genres],
-#             'songs': [song.title for song in self.songs]
-#         }
+    user = db.relationship('User', backref=db.backref('comments', lazy='dynamic'))
+    album = db.relationship('Album', backref=db.backref('comments', lazy='dynamic'))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'content': self.content,
+            'user_id': self.user_id,
+            'album_id': self.album_id,
+            'user_': self.user.to_dict() if self.user else None,
+            'album': self.album.to_dict() if self.album else None
+        }
+
+class Rating(db.Model):
+    __tablename__ = 'ratings'
+    id = db.Column(db.Integer, primary_key=True)
+    rating = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    album_id = db.Column(db.Integer, db.ForeignKey('albums.id'), nullable=False)
+
+    user = db.relationship('User', backref=db.backref('ratings', lazy='dynamic'))
+    album = db.relationship('Album', backref=db.backref('ratings', lazy='dynamic'))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'rating': self.rating,
+            'user_id': self.user_id,
+            'album_id': self.album_id,
+            'user': self.user.to_dict() if self.user else None,
+            'album': self.album.to_dict() if self.album else None
+        }

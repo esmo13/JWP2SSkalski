@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, abort
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, Artist, Genre, Song, Album
+from models import db, User, Artist, Genre, Song, Album, Comment
 from datetime import datetime
 from sqlalchemy.orm import joinedload
 users_bp = Blueprint('users', __name__, url_prefix='/api/user/')
@@ -10,6 +10,50 @@ artists_bp = Blueprint('artists', __name__, url_prefix='/api/artists/')
 genres_bp = Blueprint('genres', __name__, url_prefix='/api/genres/')
 
 albums_bp = Blueprint('albums',__name__,url_prefix='/api/albums/')
+
+comments_bp = Blueprint('comments',__name__,url_prefix='/api/comments/')
+
+
+
+@comments_bp.route('/', methods=['POST'])
+def add_comment():
+    data = request.json
+    content = data.get('content')
+    user_id = data.get('user_').get('id')
+    album_id = data.get('album_').get('id')
+
+    if not (content and user_id and album_id):
+        return jsonify({'error': 'Missing data'}), 400
+
+    user = User.query.get(user_id)
+    album = Album.query.get(album_id)
+
+    if not user or not album:
+        return jsonify({'error': 'User or Album not found'}), 404
+
+    comment = Comment(content=content, user_id=user_id, album_id=album_id)
+    db.session.add(comment)
+    db.session.commit()
+
+    return jsonify(comment.to_dict()), 201
+
+@comments_bp.route('/ofalbum/<int:album_id>', methods=['GET'])
+def get_comments_by_album(album_id):
+    album = Album.query.get(album_id)
+
+    if not album:
+        return jsonify({'error': 'Album not found'}), 404
+
+    comments = Comment.query.options(
+        joinedload(Comment.user)
+    ).filter_by(album_id=album_id).all()
+
+    comments_list = [comment.to_dict() for comment in comments]
+    return jsonify(comments_list), 200
+
+
+
+
 
 @users_bp.route('/', methods=['OPTIONS'])
 @users_bp.route('/login',methods=['OPTIONS'])
