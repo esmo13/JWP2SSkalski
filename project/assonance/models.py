@@ -126,7 +126,7 @@ class Album(db.Model):
             'cover': self.cover,
             'released': self.released.isoformat(),
             'author': self.artists[0].to_dict(),
-            'genres': self.genres[0].to_dict(),
+            'genres': [genre.to_dict() for genre in self.genres],
             'songs': [song.to_dict() for song in self.songs]
         }
 # class AlbumGenre(db.Model):

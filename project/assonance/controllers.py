@@ -32,7 +32,6 @@ def get_albums():
     ).all()
 
     albums_list = [album.to_dict() for album in albums]
-    print(albums_list[0].get('name'))
     return jsonify(albums_list), 200
 
 @albums_bp.route('/<int:album_id>', methods=['GET'])
@@ -45,7 +44,7 @@ def get_album(album_id):
 
     if album is None:
         return jsonify({'error': 'Album not found'}), 404
-
+    print(album.to_dict())
     return jsonify(album.to_dict()), 200
 @albums_bp.route('/', methods=['POST'])
 def add_album():
