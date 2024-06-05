@@ -71,20 +71,70 @@ class Genre(db.Model):
             'id': self.id,
             'name': self.name
         }
+class Song(db.Model):
+    __tablename__ = 'songs'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __hash__(self):
+        return hash(self.id)
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name
+        }
+
+
+
+album_artist_association = db.Table('album_artist',
+    db.Column('album_id', db.Integer, db.ForeignKey('albums.id'), primary_key=True),
+    db.Column('artist_id', db.Integer, db.ForeignKey('artists.id'), primary_key=True)
+)
+
+album_genre_association = db.Table('album_genre',
+    db.Column('album_id', db.Integer, db.ForeignKey('albums.id'), primary_key=True),
+    db.Column('genre_id', db.Integer, db.ForeignKey('genres.id'), primary_key=True)
+)
+
+album_song_association = db.Table('album_song',
+    db.Column('album_id', db.Integer, db.ForeignKey('albums.id'), primary_key=True),
+    db.Column('song_id', db.Integer, db.ForeignKey('songs.id'), primary_key=True)
+)
+class Album(db.Model):
+    __tablename__ = 'albums'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    cover = db.Column(db.Text, nullable=False) 
+    released = db.Column(db.Date, nullable=False)
     
+    artists = db.relationship('Artist', secondary=album_artist_association, backref=db.backref('albums', lazy='dynamic'))
+    genres = db.relationship('Genre', secondary=album_genre_association, backref=db.backref('albums', lazy='dynamic'))
+    songs = db.relationship('Song', secondary=album_song_association, backref=db.backref('albums', lazy='dynamic'))
+    
+    def __eq__(self, other):
+        return self.id == other.id
 
-# class Song(db.Model):
-#     __tablename__ = 'songs'
-#     id = db.Column(db.Integer, primary_key=True)
-#     title = db.Column(db.String(200), nullable=False)
-#     album_id = db.Column(db.Integer, db.ForeignKey('albums.id'), nullable=False)
+    def __hash__(self):
+        return hash(self.id)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'cover': self.cover,
+            'released': self.released.isoformat(),
+            'author': self.artists[0].to_dict(),
+            'genres': self.genres[0].to_dict(),
+            'songs': [song.to_dict() for song in self.songs]
+        }
 # class AlbumGenre(db.Model):
 #     __tablename__ = 'album_genre'
 #     album_id = db.Column(db.Integer, db.ForeignKey('albums.id'), primary_key=True)
 #     genre_id = db.Column(db.Integer, db.ForeignKey('genres.id'), primary_key=True)
 #     genre = db.relationship('Genre', back_populates='albums')
-#     album = db.relationship('Album', back_populates='genres')
+#     album = db.relationship('AlbumGenre', back_populates='genres')
 
 # class Album(db.Model):
 #     __tablename__ = 'albums'
@@ -96,13 +146,13 @@ class Genre(db.Model):
 #     genres = db.relationship('AlbumGenre', back_populates='album')
 #     songs = db.relationship('Song', backref='album', lazy=True)
 
-    # def to_dict(self):
-    #     return {
-    #         'id': self.id,
-    #         'name': self.name,
-    #         'cover': self.cover,
-    #         'author': self.author.name,
-    #         'released': self.released.isoformat() if self.released else None,
-    #         'genres': [genre.genre.name for genre in self.genres],
-    #         'songs': [song.title for song in self.songs]
-    #     }
+#     def to_dict(self):
+#         return {
+#             'id': self.id,
+#             'name': self.name,
+#             'cover': self.cover,
+#             'author': self.author.name,
+#             'released': self.released.isoformat() if self.released else None,
+#             'genres': [genre.genre.name for genre in self.genres],
+#             'songs': [song.title for song in self.songs]
+#         }

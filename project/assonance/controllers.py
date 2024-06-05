@@ -1,23 +1,107 @@
 from flask import Blueprint, request, jsonify, abort
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, Artist, Genre
-
+from models import db, User, Artist, Genre, Song, Album
+from datetime import datetime
+from sqlalchemy.orm import joinedload
 users_bp = Blueprint('users', __name__, url_prefix='/api/user/')
 
 artists_bp = Blueprint('artists', __name__, url_prefix='/api/artists/')
 
 genres_bp = Blueprint('genres', __name__, url_prefix='/api/genres/')
 
-# @users_bp.route('/', methods=['OPTIONS'])
-# @users_bp.route('/login',methods=['OPTIONS'])
-# @artists_bp.route('/', methods=['OPTIONS'])
-# def handle_preflight():
-#     response = jsonify({})
-#     response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
-#     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-#     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
-#     response.headers.add('Access-Control-Max-Age', '86400')
-#     return response
+albums_bp = Blueprint('albums',__name__,url_prefix='/api/albums/')
+
+@users_bp.route('/', methods=['OPTIONS'])
+@users_bp.route('/login',methods=['OPTIONS'])
+@artists_bp.route('/', methods=['OPTIONS'])
+@albums_bp.route('/',methods=['OPTIONS'])
+def handle_preflight():
+    response = jsonify({})
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
+    response.headers.add('Access-Control-Max-Age', '86400')
+    return response
+
+@albums_bp.route('/', methods=['GET'])
+def get_albums():
+    albums = Album.query.options(
+        joinedload(Album.artists),
+        joinedload(Album.genres),
+        joinedload(Album.songs)
+    ).all()
+
+    albums_list = [album.to_dict() for album in albums]
+    print(albums_list[0].get('name'))
+    return jsonify(albums_list), 200
+
+@albums_bp.route('/<int:album_id>', methods=['GET'])
+def get_album(album_id):
+    album = Album.query.options(
+        joinedload(Album.artists),
+        joinedload(Album.genres),
+        joinedload(Album.songs)
+    ).filter_by(id=album_id).first()
+
+    if album is None:
+        return jsonify({'error': 'Album not found'}), 404
+
+    return jsonify(album.to_dict()), 200
+@albums_bp.route('/', methods=['POST'])
+def add_album():
+    data = request.json
+    print(data.get('released'))
+    name = data.get('name')
+    cover = data.get('cover')
+    released = data.get('released')
+    artist_ids = [data.get('author').get('id')]
+    genre_ids = [data.get('genres')[0].get('id')]
+    songs_data = data.get('songs')
+
+    # Validate input data
+    if not (name and cover and released and artist_ids and genre_ids and songs_data):
+        return jsonify({'error': 'Missing data'}), 400
+
+    try:
+        creation_date = datetime.strptime(released, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Invalid date format'}), 400
+
+    # Fetch existing artists and genres
+    artists = Artist.query.filter(Artist.id.in_(artist_ids)).all()
+    genres = Genre.query.filter(Genre.id.in_(genre_ids)).all()
+
+    if len(artists) != len(artist_ids):
+        return jsonify({'error': 'One or more artists not found'}), 404
+
+    if len(genres) != len(genre_ids):
+        return jsonify({'error': 'One or more genres not found'}), 404
+
+    # Create new songs
+    songs = []
+    for song_data in songs_data:
+        song_name = song_data.get('name')
+        if not song_name:
+            return jsonify({'error': 'Song name missing'}), 400
+        song = Song(name=song_name)
+        songs.append(song)
+
+    # Create new album
+    album = Album(
+        name=name,
+        cover=cover,
+        released=creation_date,
+        artists=artists,
+        genres=genres,
+        songs=songs
+    )
+
+    db.session.add(album)
+    db.session.commit()
+
+    return jsonify(album.to_dict()), 201
+
+
 
 @genres_bp.route('/',methods=["GET"])
 def get_genres():
