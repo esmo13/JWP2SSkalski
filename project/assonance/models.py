@@ -137,8 +137,8 @@ class Comment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     album_id = db.Column(db.Integer, db.ForeignKey('albums.id'), nullable=False)
 
-    user = db.relationship('User', backref=db.backref('comments', lazy='dynamic'))
-    album = db.relationship('Album', backref=db.backref('comments', lazy='dynamic'))
+    user = db.relationship('User', backref=db.backref('comments', lazy=True))
+    album = db.relationship('Album', backref=db.backref('comments', lazy=True))
 
     def to_dict(self):
         return {
@@ -146,26 +146,23 @@ class Comment(db.Model):
             'content': self.content,
             'user_id': self.user_id,
             'album_id': self.album_id,
-            'user_': self.user.to_dict() if self.user else None,
-            'album': self.album.to_dict() if self.album else None
+            'user_': self.user.to_dict() if self.user else None
         }
 
 class Rating(db.Model):
     __tablename__ = 'ratings'
     id = db.Column(db.Integer, primary_key=True)
-    rating = db.Column(db.Integer, nullable=False)
+    rating = db.Column(db.Float, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     album_id = db.Column(db.Integer, db.ForeignKey('albums.id'), nullable=False)
 
-    user = db.relationship('User', backref=db.backref('ratings', lazy='dynamic'))
-    album = db.relationship('Album', backref=db.backref('ratings', lazy='dynamic'))
+    user = db.relationship('User', backref=db.backref('ratings', lazy=True))
+    album = db.relationship('Album', backref=db.backref('ratings', lazy=True))
 
     def to_dict(self):
         return {
             'id': self.id,
             'rating': self.rating,
             'user_id': self.user_id,
-            'album_id': self.album_id,
-            'user': self.user.to_dict() if self.user else None,
-            'album': self.album.to_dict() if self.album else None
+            'album_id': self.album_id
         }

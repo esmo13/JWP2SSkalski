@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, abort
+from sqlalchemy.sql import func
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, Artist, Genre, Song, Album, Comment
+from models import db, User, Artist, Genre, Song, Album, Comment, Rating
 from datetime import datetime
 from sqlalchemy.orm import joinedload
 users_bp = Blueprint('users', __name__, url_prefix='/api/user/')
@@ -13,7 +14,80 @@ albums_bp = Blueprint('albums',__name__,url_prefix='/api/albums/')
 
 comments_bp = Blueprint('comments',__name__,url_prefix='/api/comments/')
 
+ratings_bp = Blueprint('rating',__name__,url_prefix='/api/rating')
 
+
+@ratings_bp.route('/count/<int:album_id>', methods=['GET'])
+def get_rating_count(album_id):
+    rating_count = db.session.query(func.count(Rating.id)).filter_by(album_id=album_id).scalar()
+
+    if rating_count is None:
+        return jsonify({'error': 'No ratings found for this album'}), 404
+
+    return jsonify({'album_id': album_id, 'rating_count': rating_count}), 200
+
+@ratings_bp.route('/<int:rating_id>', methods=['PUT'])
+def update_rating(rating_id):
+    data = request.json
+    new_rating_value = data.get('rating')
+
+    if new_rating_value is None:
+        return jsonify({'error': 'Missing rating value'}), 400
+
+    rating = Rating.query.get(rating_id)
+
+    if not rating:
+        return jsonify({'error': 'Rating not found'}), 404
+
+    rating.rating = new_rating_value
+    db.session.commit()
+
+    return jsonify(rating.to_dict()), 200
+
+
+
+@ratings_bp.route('/', methods=['POST'])
+def add_rating():
+    data = request.json
+    rating_value = data.get('rating')
+    user_id = data.get('userid')
+    album_id = data.get('albumid')
+
+    if not (rating_value and user_id and album_id):
+        return jsonify({'error': 'Missing data'}), 400
+
+    if not (1 <= rating_value <= 5):  # Assuming a rating scale of 1-5
+        return jsonify({'error': 'Invalid rating value'}), 400
+
+    user = User.query.get(user_id)
+    album = Album.query.get(album_id)
+
+    if not user or not album:
+        return jsonify({'error': 'User or Album not found'}), 404
+
+    rating = Rating(rating=rating_value, user_id=user_id, album_id=album_id)
+    db.session.add(rating)
+    db.session.commit()
+
+    return jsonify(rating.to_dict()), 201
+
+@ratings_bp.route('/<int:album_id>/<int:user_id>', methods=['GET'])
+def get_rating_by_user(album_id, user_id):
+    rating = Rating.query.filter_by(album_id=album_id, user_id=user_id).first()
+
+    if not rating:
+        return jsonify({'error': 'Rating not found'}), 404
+
+    return jsonify(rating.to_dict()), 200
+
+@ratings_bp.route('/avg/<int:album_id>', methods=['GET'])
+def get_average_rating(album_id):
+    avg_rating = db.session.query(func.avg(Rating.rating)).filter_by(album_id=album_id).scalar()
+
+    if avg_rating is None:
+        return jsonify({'error': 'No ratings found for this album'}), 404
+
+    return jsonify({'album_id': album_id, 'average_rating': round(avg_rating, 2)}), 200
 
 @comments_bp.route('/', methods=['POST'])
 def add_comment():
@@ -24,12 +98,6 @@ def add_comment():
 
     if not (content and user_id and album_id):
         return jsonify({'error': 'Missing data'}), 400
-
-    user = User.query.get(user_id)
-    album = Album.query.get(album_id)
-
-    if not user or not album:
-        return jsonify({'error': 'User or Album not found'}), 404
 
     comment = Comment(content=content, user_id=user_id, album_id=album_id)
     db.session.add(comment)
@@ -54,7 +122,7 @@ def get_comments_by_album(album_id):
 
 
 
-
+@ratings_bp.route('/', methods=['OPTIONS'])
 @users_bp.route('/', methods=['OPTIONS'])
 @users_bp.route('/login',methods=['OPTIONS'])
 @artists_bp.route('/', methods=['OPTIONS'])
