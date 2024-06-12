@@ -17,6 +17,27 @@ comments_bp = Blueprint('comments',__name__,url_prefix='/api/comments/')
 ratings_bp = Blueprint('rating',__name__,url_prefix='/api/rating')
 
 
+@albums_bp.route('/count', methods=['GET'])
+def get_album_count():
+    album_count = db.session.query(func.count(Album.id)).scalar()
+    return jsonify({'album_count': album_count}), 200
+
+@artists_bp.route('/count', methods=['GET'])
+def get_artist_count():
+    artist_count = db.session.query(func.count(Artist.id)).scalar()
+    return jsonify({'artist_count': artist_count}), 200
+
+@comments_bp.route('/count', methods=['GET'])
+def get_comment_count():
+    comment_count = db.session.query(func.count(Comment.id)).scalar()
+    return jsonify({'comment_count': comment_count}), 200
+
+@ratings_bp.route('/count', methods=['GET'])
+def get_rating_count_whole():
+    rating_count = db.session.query(func.count(Rating.id)).scalar()
+    return jsonify({'rating_count': rating_count}), 200
+
+
 @ratings_bp.route('/count/<int:album_id>', methods=['GET'])
 def get_rating_count(album_id):
     rating_count = db.session.query(func.count(Rating.id)).filter_by(album_id=album_id).scalar()
@@ -270,11 +291,10 @@ def get_user(id):
 def update_user(id):
     user = User.query.get_or_404(id)
     data = request.json
-    if not data or not 'name' in data or not 'email' in data or not 'password' in data or not 'role' in data:
+    if not data or not 'name' in data or not 'email' in data or not 'role' in data:
         abort(400)
     user.name = data['name']
     user.email = data['email']
-    user.password = generate_password_hash(data['password'])
     user.role = data['role']
     db.session.commit()
     return '', 204
@@ -310,6 +330,7 @@ def login():
     if not data or not 'name' in data or not 'password' in data:
         abort(400)
     user = User.query.filter_by(name=data['name']).first()
+    print(user.to_dict())
     if user and check_password_hash(user.password, data['password']):
         return jsonify(user.to_dict())
     else:
