@@ -35,6 +35,7 @@ services:
     volumes:
       - ./db/postgres:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
 
 networks:
   network:
