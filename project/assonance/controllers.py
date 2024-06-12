@@ -143,18 +143,18 @@ def get_comments_by_album(album_id):
 
 
 
-@ratings_bp.route('/', methods=['OPTIONS'])
-@users_bp.route('/', methods=['OPTIONS'])
-@users_bp.route('/login',methods=['OPTIONS'])
-@artists_bp.route('/', methods=['OPTIONS'])
-@albums_bp.route('/',methods=['OPTIONS'])
-def handle_preflight():
-    response = jsonify({})
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
-    response.headers.add('Access-Control-Max-Age', '86400')
-    return response
+# @ratings_bp.route('/', methods=['OPTIONS'])
+# @users_bp.route('/', methods=['OPTIONS'])
+# @users_bp.route('/login',methods=['OPTIONS'])
+# @artists_bp.route('/', methods=['OPTIONS'])
+# @albums_bp.route('/',methods=['OPTIONS'])
+# def handle_preflight():
+#     response = jsonify({})
+#     response.headers.add('Access-Control-Allow-Origin', 'http://frontend:3000')
+#     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+#     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
+#     response.headers.add('Access-Control-Max-Age', '86400')
+#     return response
 
 @albums_bp.route('/', methods=['GET'])
 def get_albums():

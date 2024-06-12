@@ -21,4 +21,4 @@ app.register_blueprint(comments_bp)
 app.register_blueprint(ratings_bp)
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=44338, debug=True)
+    app.run(host='0.0.0.0', port=44338, debug=True)

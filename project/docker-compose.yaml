@@ -1,0 +1,41 @@
+version: "3"
+
+services: 
+  frontend:
+    container_name: frontend
+    build:
+      context: ./AssonanceClient
+    ports:
+      - 80:3000
+    depends_on:
+      - backend
+    networks:
+      - network
+    restart: always
+  backend:
+    container_name: backend
+    build:
+      context: ./assonance
+    ports:
+      - 44338:44338
+    networks:
+      - network
+    depends_on:
+      - postgres
+    restart: always
+  postgres:
+    container_name: postgres
+    image: postgres:14.1-alpine
+    networks:
+      - network
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=asso_pyton
+    volumes:
+      - ./db/postgres:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+networks:
+  network:
+    driver: bridge
